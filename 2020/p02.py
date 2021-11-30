@@ -4,13 +4,13 @@
 # There will only ever be a single colon
 # 3-14 v: vvpvvvmvvvvvvvv
 # 2-5 m: mfvxmmm
-in_arr : list[tuple[int, int, str, str]] = list()
+arr: list[tuple[int, int, str, str]] = list()
 with open ("./inputs/p02.txt", "r") as f:
     line = f.readline()
     while line:
         s = line.strip().split(" ")
         mn, mx = s[0].split("-")
-        in_arr.append((int(mn), int(mx), s[1][0], s[2]))
+        arr.append((int(mn), int(mx), s[1][0], s[2]))
         line = f.readline()
 
 # Part 1: check the number of character occurences in a string
@@ -63,7 +63,7 @@ def check_indices(ix: int, iy: int, char: str, paswd: str) -> bool:
 
 
 n_char_valid = n_ind_valid = 0
-for v in in_arr:
+for v in arr:
     if count_chars(*v):
         n_char_valid += 1
     if check_indices(*v):

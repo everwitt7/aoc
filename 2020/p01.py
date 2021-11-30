@@ -1,11 +1,11 @@
 """Advent of Code 2020: Problem 1"""
 
 # read input file into an array of strings
-in_arr : list[int] = list()
+arr: list[int] = list()
 with open ("./inputs/p01.txt", "r") as f:
     line = f.readline()
     while line:
-        in_arr.append(int(line.strip()))
+        arr.append(int(line.strip()))
         line = f.readline()
 
 # Part 1: two sum to find the the numbers that sum to 2020
@@ -43,7 +43,7 @@ Input[4] is 8, which is in indices!
 We return Input[indices[8]] => Input[2] => 7, and the current value 8
 """
 
-first, second = get_two_vals(in_arr, 2020)
+first, second = get_two_vals(arr, 2020)
 print("Two Sum:", first, second, first + second, first * second)
 
 # Part 2: three sum to find the numbers that sum to 2020
@@ -55,5 +55,5 @@ def get_three_vals(arr) -> tuple[int, int, int]:
             return arr[i], second, third
     return -1, -1, -1
 
-one, two, three = get_three_vals(in_arr)
+one, two, three = get_three_vals(arr)
 print("Three Sum:", one, two, three, one + two + three, one * two * three)
