@@ -30,6 +30,26 @@ fn calc_dims(dims: &String) -> i32 {
     // println!("{}", min);
     return res + min;
 }
+
+fn calc_ribbons(dims: &String) -> i32 {
+    let mut parts: Vec<i32> = dims
+        .split("x")
+        .map(|s| s.parse::<i32>().unwrap())
+        .collect();
+
+    parts.sort(); 
+
+    let mut res = 1;
+    for i in 0..parts.len() {
+        res *= parts[i]
+    }
+
+    let perim = 2 * parts[0] + 2 * parts[1];
+    
+    // println!("{}, {}", perim, res);
+    return perim + res;
+}
+
 fn main() {
     let fp = "./inputs/p02";
     
@@ -44,11 +64,26 @@ fn main() {
     let ans: i32 = res.iter().sum();
     println!("{}", ans);
 
+
+    // part 2
+    let rib_res: Vec<i32> = lines
+        .iter()
+        .map(calc_ribbons)
+        .collect();
+
+    let rib_ans: i32 = rib_res.iter().sum();
+    println!("{}", rib_ans);
+
+
+
     // create test cases for my functions in the future in order to test the samples
     // and then be able to test that via the command line.
     // I also need to attach an LSP and debugger
     let sample: String = String::from("2x3x4");
     let test: i32 = calc_dims(&sample);
     println!("{}", test);
+
+    let rib_test: i32 = calc_ribbons(&sample);
+    println!("{}", rib_test);
 }
 
