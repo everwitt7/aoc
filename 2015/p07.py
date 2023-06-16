@@ -10,12 +10,18 @@ BIT_LENGTH = 16
 
 # represent most significant bit at index 0, LSB at index 15
 # this bit shifting, is technicaly agnostic to bit array length
-def lshift(bits, num):
+def lshift(obits, num):
+    bits = obits[:]
+    if isinstance(num, str):
+        num = int(num)
     bits[:len(bits)-num] = bits[num:]
     bits[len(bits)-num:] = [0 for _ in range(num)]
     return bits
 
-def rshift(bits, num):
+def rshift(obits, num):
+    bits = obits[:]
+    if isinstance(num, str):
+        num = int(num)
     bits[num:] = bits[:len(bits)-num]
     bits[:num] = [0 for _ in range(num)]
     return bits
@@ -47,10 +53,17 @@ def bit_not(bits):
     return arr
 
 def int_to_bits(num: int):
+    if isinstance(num, str):
+        num = int(num)
     if num > 65535:
         print(f"{num=} larger than unsigned 16 bit int")
     return [(num >> i) & 1 for i in range(BIT_LENGTH-1, -1, -1)]
 
+def bits_to_int(bits):
+    num = 0
+    for i in range(BIT_LENGTH):
+        num += pow(2, BIT_LENGTH-1-i) * bits[i]
+    return num
 
 def parser(file: str):
     contents = []
@@ -59,7 +72,7 @@ def parser(file: str):
             contents.append(line.rstrip())
     return contents 
 
-def one(contents: list):
+def one(contents: list, signals: dict):
     """
     signals can come BEFORE they get a value
         - lookup signal, if it does not exist pass 0
@@ -68,9 +81,11 @@ def one(contents: list):
     16 bit representation for LSHIFT
         - make an array of bits of length 16?
     """
-    signals = {}
+
     for line in contents: 
         input, output = line.split(" -> ")
+        # print(line)
+        # print(signals)
 
         # its possible to have a literal instead of a signal as an argument
         # 1 AND cc -> cd
@@ -86,25 +101,44 @@ def one(contents: list):
                 signals[output] = bit_and(int_to_bits(sig1), signals[sig2])
             elif sig1 in signals and sig2 in signals:
                 signals[output] = bit_and(signals[sig1], signals[sig2])
-            else:
-                print("gate should provide no signal until all inputs have a signal")
 
         elif OR in input:
             sig1, sig2 = input.split(OR)
-            signals[output] = signals[sig1] | signals[sig2]
+            
+            if sig1.isnumeric() and sig2.isnumeric():
+                signals[output] = bit_or(int_to_bits(sig1), int_to_bits(sig2))
+            elif sig1 in signals and sig2.isnumeric():
+                signals[output] = bit_or(signals[sig1], int_to_bits(sig2))
+            elif sig1.isnumeric() and sig2 in signals:
+                signals[output] = bit_or(int_to_bits(sig1), signals[sig2])
+            elif sig1 in signals and sig2 in signals:
+                signals[output] = bit_or(signals[sig1], signals[sig2])
+
         elif LSHIFT in input:
             sig, num = input.split(LSHIFT)
-            signals[output] = signals[sig] << int(num) 
+
+            if sig in signals:
+                signals[output] = lshift(signals[sig], num)
+
         elif RSHIFT in input:
             sig, num = input.split(RSHIFT)
-            signals[output] = signals[sig] >> int(num) 
+
+            if sig in signals:
+                signals[output] = rshift(signals[sig], num)
+
         elif NOT in input:
             sig = input.split(NOT)[-1]
-            # deal with twos complement to make it unsigned
-            signals[output] = ~signals[sig] & 0xFFFF
+
+            if sig in signals:
+                signals[output] = bit_not(signals[sig])
+
         else:
-            # set the value of the signal
-            signals[output] = int(input)
+            # set the value of the signal, `0 -> c`
+            if input.isnumeric():
+                signals[output] = int_to_bits(input)
+            else:
+                if input in signals:
+                    signals[output] = signals[input]
 
     return signals
 
@@ -170,38 +204,18 @@ if __name__ == "__main__":
               "NOT x -> h",
               "NOT y -> i"]
 
+    # I misunderstood - `a gate provides no signal until all of its inputs have a signal`
+    # means as soon as the inputs have a value, the output then gets a value, and this
+    # chain occurs until every wire has a value, otherwise you get like 6 wires with
+    # values, which is what I was seeing
     signals = {}
+    while 'a' not in signals:
+        signals = one(contents, signals)
 
-    for line in sample:
-        input, output = line.split(" -> ")
+    for k, v in signals.items():
+        signals[k] = bits_to_int(v)
 
-        if AND in input:
-            sig1, sig2 = input.split(AND)
-            # signals[output] = signals[sig1].value & signals[sig2].value
-            signals[output] = signals[sig1] & signals[sig2]
-        elif OR in input:
-            sig1, sig2 = input.split(OR)
-            signals[output] = signals[sig1] | signals[sig2]
-        elif LSHIFT in input:
-            sig, num = input.split(LSHIFT)
-            signals[output] = signals[sig] << int(num) 
-        elif RSHIFT in input:
-            sig, num = input.split(RSHIFT)
-            signals[output] = signals[sig] >> int(num) 
-        elif NOT in input:
-            sig = input.split(NOT)[-1]
-            # deal with twos complement to make it unsigned
-            signals[output] = ~signals[sig] & 0xFFFF
-        else:
-            # set the value of the signal
-            # bit_rep = ctypes.c_uint16(int(input))
-            # signals[output] = bit_rep
-            signals[output] = int(input)
-
-    # print(signals)
-
-    # syms = one(contents)
-    # print(syms['a'])
+    print(signals['a'])
 
     test_lshift()
     test_rshift()
