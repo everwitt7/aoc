@@ -142,8 +142,79 @@ def one(contents: list, signals: dict):
 
     return signals
 
-def two():
-    pass
+
+def two(contents: list, signals: dict):
+    """
+    signals can come BEFORE they get a value
+        - lookup signal, if it does not exist pass 0
+    we can AND (or other gates) with a literal instead of a signal
+        - check if `int(left/right)` is possible
+    16 bit representation for LSHIFT
+        - make an array of bits of length 16?
+    """
+
+    for line in contents: 
+        input, output = line.split(" -> ")
+        if output == 'b':
+            continue
+        # print(line)
+        # print(signals)
+
+        # its possible to have a literal instead of a signal as an argument
+        # 1 AND cc -> cd
+        if AND in input:
+            # use string.isnumeric() to check if literal or signal
+            sig1, sig2 = input.split(AND)
+
+            if sig1.isnumeric() and sig2.isnumeric():
+                signals[output] = bit_and(int_to_bits(sig1), int_to_bits(sig2))
+            elif sig1 in signals and sig2.isnumeric():
+                signals[output] = bit_and(signals[sig1], int_to_bits(sig2))
+            elif sig1.isnumeric() and sig2 in signals:
+                signals[output] = bit_and(int_to_bits(sig1), signals[sig2])
+            elif sig1 in signals and sig2 in signals:
+                signals[output] = bit_and(signals[sig1], signals[sig2])
+
+        elif OR in input:
+            sig1, sig2 = input.split(OR)
+            
+            if sig1.isnumeric() and sig2.isnumeric():
+                signals[output] = bit_or(int_to_bits(sig1), int_to_bits(sig2))
+            elif sig1 in signals and sig2.isnumeric():
+                signals[output] = bit_or(signals[sig1], int_to_bits(sig2))
+            elif sig1.isnumeric() and sig2 in signals:
+                signals[output] = bit_or(int_to_bits(sig1), signals[sig2])
+            elif sig1 in signals and sig2 in signals:
+                signals[output] = bit_or(signals[sig1], signals[sig2])
+
+        elif LSHIFT in input:
+            sig, num = input.split(LSHIFT)
+
+            if sig in signals:
+                signals[output] = lshift(signals[sig], num)
+
+        elif RSHIFT in input:
+            sig, num = input.split(RSHIFT)
+
+            if sig in signals:
+                signals[output] = rshift(signals[sig], num)
+
+        elif NOT in input:
+            sig = input.split(NOT)[-1]
+
+            if sig in signals:
+                signals[output] = bit_not(signals[sig])
+
+        else:
+            # set the value of the signal, `0 -> c`
+            if input.isnumeric():
+                signals[output] = int_to_bits(input)
+            else:
+                if input in signals:
+                    signals[output] = signals[input]
+
+    return signals
+
 
 def test_lshift():
     test = [1, 1, 1, 1,
@@ -215,7 +286,20 @@ if __name__ == "__main__":
     for k, v in signals.items():
         signals[k] = bits_to_int(v)
 
-    print(signals['a'])
+    print(f"{signals['a']=}")
+
+    # part 2, override wire b to the value of a from part one (so ignore this output)
+    val = signals['a']
+    signals = {}
+    signals['b'] = int_to_bits(val)
+
+    while 'a' not in signals:
+        signals = two(contents, signals)
+
+    for k, v in signals.items():
+        signals[k] = bits_to_int(v)
+
+    print(f"{signals['a']=}")
 
     test_lshift()
     test_rshift()
