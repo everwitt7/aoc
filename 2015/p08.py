@@ -12,6 +12,13 @@ def one(contents):
         new_contents.append(string)
     return new_contents
 
+def two(contents):
+    new_contents = []
+    for line in contents:
+        string = '"' + line.replace('\\', '\\\\').replace('"', '\\"') + '"'
+        new_contents.append(string)
+    return new_contents
+
 
 def calculate_code_minus_memory(filename):
     total_code_length = 0
@@ -45,3 +52,14 @@ if __name__ == "__main__":
         c2 += len(s)
 
     print(c1, c2, c1-c2)
+
+    nn = two(contents)
+    c1, c2 = 0, 0
+
+    for s in contents:
+        c1 += len(s)
+    for s in nn:
+        c2 += len(s)
+
+    print(c1, c2, c2-c1)
+
